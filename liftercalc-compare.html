@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>LifterCalc A/B Compare</title>
+  <style>
+    :root{
+      --bg1:#f5f7ff;
+      --bg2:#edf6fb;
+      --card:rgba(255,255,255,.76);
+      --card-border:rgba(15,23,42,.08);
+      --text:#0f172a;
+      --muted:#64748b;
+      --shadow:0 18px 50px rgba(15,23,42,.10);
+      --winner:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(37,99,235,.14), transparent 34%),
+        radial-gradient(circle at top right, rgba(15,118,110,.12), transparent 30%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+    .app{
+      width:min(1280px, calc(100% - 12px));
+      margin:0 auto;
+      padding:6px 0 10px;
+    }
+    .toolbar{
+      position:sticky;
+      top:6px;
+      z-index:10;
+      padding:9px;
+      margin-bottom:6px;
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      background:rgba(255,255,255,.82);
+      backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
+    }
+    .toolbar-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+    .group{display:grid; gap:6px;}
+    .group-label{
+      font-size:11px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-weight:800;
+    }
+    .segmented{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns:1fr;
+      gap:6px;
+      background:rgba(148,163,184,.12);
+      padding:5px;
+      border-radius:14px;
+    }
+    .segmented button{
+      appearance:none;
+      border:none;
+      background:transparent;
+      color:var(--muted);
+      padding:8px 6px;
+      border-radius:11px;
+      font-size:11px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .segmented button.active{
+      background:#fff;
+      color:var(--text);
+      box-shadow:0 8px 20px rgba(15,23,42,.10);
+    }
+    .compare{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:5px;
+      align-items:start;
+    }
+    .panel{
+      border:1px solid var(--card-border);
+      border-radius:18px;
+      background:var(--card);
+      backdrop-filter:blur(12px);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .panel.winner{
+      border-color:rgba(245,158,11,.65);
+      box-shadow:0 0 0 1px rgba(245,158,11,.14), 0 18px 50px rgba(245,158,11,.16);
+      transform:translateY(-1px);
+    }
+    .panel-head{
+      padding:9px 10px 8px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      border-bottom:1px solid rgba(15,23,42,.06);
+      background:linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.30));
+    }
+    .panel.winner .panel-head{
+      background:linear-gradient(180deg, rgba(255,248,225,.96), rgba(255,255,255,.35));
+    }
+    .panel-title{
+      margin:0;
+      font-size:15px;
+      letter-spacing:-.02em;
+    }
+    .panel-sub{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:10px;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .winner-chip{
+      display:none;
+      padding:4px 7px;
+      border-radius:999px;
+      color:#92400e;
+      background:rgba(245,158,11,.18);
+      border:1px solid rgba(245,158,11,.18);
+    }
+    .panel.winner .winner-chip{display:inline-flex;}
+    .panel-body{
+      padding:10px;
+      display:grid;
+      gap:7px;
+    }
+    .field-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:6px;
+    }
+    .field{
+      display:grid;
+      gap:5px;
+    }
+    .field label{
+      font-size:10px;
+      color:var(--muted);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .field input{
+      width:100%;
+      border:1px solid rgba(100,116,139,.20);
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+      color:var(--text);
+    }
+    .field input:focus{
+      border-color:rgba(37,99,235,.55);
+      box-shadow:0 0 0 4px rgba(37,99,235,.10);
+    }
+    .result-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:6px;
+    }
+    .metric{
+      background:rgba(255,255,255,.82);
+      border:1px solid rgba(15,23,42,.07);
+      border-radius:14px;
+      padding:9px;
+      min-height:58px;
+    }
+    .metric .k{
+      font-size:10px;
+      color:var(--muted);
+      font-weight:800;
+      margin-bottom:5px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .metric .v{
+      font-size:19px;
+      font-weight:900;
+      line-height:1.05;
+      letter-spacing:-.03em;
+      font-variant-numeric:tabular-nums;
+    }
+    .metric .s{
+      margin-top:3px;
+      color:var(--muted);
+      font-size:10px;
+      line-height:1.3;
+    }
+    .footnote{
+      margin-top:6px;
+      padding:0 4px;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.4;
+    }
+    @media (max-width: 980px){
+      .toolbar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+    @media (max-width: 720px){
+      .app{width:min(100% - 8px, 1280px); padding-top:4px;}
+      .toolbar{top:5px; padding:8px; border-radius:14px;}
+      .toolbar-grid{grid-template-columns:1fr;}
+      .compare{gap:4px;}
+      .panel{border-radius:16px;}
+      .panel-head,.panel-body{padding-left:8px; padding-right:8px;}
+      .panel-head{padding-top:8px; padding-bottom:7px;}
+      .panel-body{padding-top:8px; padding-bottom:8px; gap:5px;}
+      .field-grid{grid-template-columns:1fr;}
+      .segmented button{padding:7px 4px; font-size:10px;}
+      .panel-title{font-size:13px;}
+      .metric{padding:8px; min-height:52px;}
+      .metric .v{font-size:17px;}
+      .field input{padding:8px 9px; font-size:13px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="toolbar">
+      <div class="toolbar-grid">
+        <div class="group">
+          <div class="group-label">Coefficient</div>
+          <div class="segmented two" id="coefSelect">
+            <button class="active" data-coef="dots">DOTS</button>
+            <button data-coef="ipfgl">IPF GL</button>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-label">Meet Type</div>
+          <div class="segmented two" id="meetSelect">
+            <button class="active" data-meet="full">FULL MEET</button>
+            <button data-meet="bench">BENCH ONLY</button>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-label">Gender</div>
+          <div class="segmented two" id="gender">
+            <button class="active" data-gender="male">MALE</button>
+            <button data-gender="female">FEMALE</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="compare">
+      <article class="panel" id="panelA">
+        <div class="panel-head">
+          <h2 class="panel-title">Lifter A</h2>
+          <div class="panel-sub"><span class="winner-chip">WINNER</span><span>Left</span></div>
+        </div>
+        <div class="panel-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Body Weight (KG)</label>
+              <input type="number" inputmode="decimal" step="0.1" min="0" id="bwA" value="82.5" />
+            </div>
+            <div class="field">
+              <label>Lifted Weight (KG)</label>
+              <input type="number" inputmode="decimal" step="0.1" min="0" id="wlA" value="180" />
+            </div>
+          </div>
+          <div class="result-grid">
+            <div class="metric">
+              <div class="k">Selected Score</div>
+              <div class="v" id="scoreA">0.00</div>
+              <div class="s" id="labelA">DOTS / MALE</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel" id="panelB">
+        <div class="panel-head">
+          <h2 class="panel-title">Lifter B</h2>
+          <div class="panel-sub"><span class="winner-chip">WINNER</span><span>Right</span></div>
+        </div>
+        <div class="panel-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Body Weight (KG)</label>
+              <input type="number" inputmode="decimal" step="0.1" min="0" id="bwB" value="90" />
+            </div>
+            <div class="field">
+              <label>Lifted Weight (KG)</label>
+              <input type="number" inputmode="decimal" step="0.1" min="0" id="wlB" value="195" />
+            </div>
+          </div>
+          <div class="result-grid">
+            <div class="metric">
+              <div class="k">Selected Score</div>
+              <div class="v" id="scoreB">0.00</div>
+              <div class="s" id="labelB">DOTS / MALE</div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <div class="footnote">自动高亮会标出当前选定系数下分数更高的一侧，平分时两边保持中性。</div>
+  </div>
+
+  <script>
+    const state = { coef: 'dots', meet: 'full', gender: 'male' };
+
+    const els = {
+      coefSelect: document.getElementById('coefSelect'),
+      meetSelect: document.getElementById('meetSelect'),
+      gender: document.getElementById('gender'),
+      bwA: document.getElementById('bwA'),
+      wlA: document.getElementById('wlA'),
+      bwB: document.getElementById('bwB'),
+      wlB: document.getElementById('wlB'),
+      scoreA: document.getElementById('scoreA'),
+      scoreB: document.getElementById('scoreB'),
+      labelA: document.getElementById('labelA'),
+      labelB: document.getElementById('labelB'),
+      panelA: document.getElementById('panelA'),
+      panelB: document.getElementById('panelB')
+    };
+
+    const round2 = (n) => Math.round(n * 100) / 100;
+    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+    const genderLabel = (gender) => gender === 'female' ? 'FEMALE' : 'MALE';
+    const meetCode = (meet) => meet === 'bench' ? 'BN' : 'PL';
+
+    function selectedLabel() {
+      return state.coef === 'dots' ? 'DOTS' : 'IPF GL';
+    }
+
+    function dots(bodyWeightKg, liftedKg, gender) {
+      const coeff = gender === 'female'
+        ? [-57.96288, 13.6175032, -0.1126655495, 0.0005158568, -0.0000010706]
+        : [-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093];
+      const bw = clamp(bodyWeightKg, 40, 210);
+      let denom = coeff[0];
+      for (let i = 1; i < coeff.length; i++) denom += coeff[i] * Math.pow(bw, i);
+      return round2((500 / denom) * liftedKg);
+    }
+
+    function ipfGL(bodyWeightKg, liftedKg, gender) {
+      const coeff = gender === 'female'
+        ? [610.32796, 1045.59282, 0.03048]
+        : [1199.72839, 1025.18162, 0.00921];
+      if (bodyWeightKg < 35) return 0;
+      const power = -coeff[2] * bodyWeightKg;
+      return round2(liftedKg * (100 / (coeff[0] - coeff[1] * Math.exp(power))));
+    }
+
+    function score(bodyWeightKg, liftedKg) {
+      return state.coef === 'dots'
+        ? dots(bodyWeightKg, liftedKg, state.gender)
+        : ipfGL(bodyWeightKg, liftedKg, state.gender);
+    }
+
+    function setActive(container, key, value) {
+      container.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset[key] === value);
+      });
+    }
+
+    function render() {
+      const bwA = parseFloat(els.bwA.value || '0') || 0;
+      const wlA = parseFloat(els.wlA.value || '0') || 0;
+      const bwB = parseFloat(els.bwB.value || '0') || 0;
+      const wlB = parseFloat(els.wlB.value || '0') || 0;
+
+      const scoreA = score(bwA, wlA);
+      const scoreB = score(bwB, wlB);
+      const winner = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : 'TIE';
+
+      els.scoreA.textContent = scoreA.toFixed(2);
+      els.scoreB.textContent = scoreB.toFixed(2);
+      els.labelA.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
+      els.labelB.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
+
+      els.panelA.classList.toggle('winner', winner === 'A');
+      els.panelB.classList.toggle('winner', winner === 'B');
+
+      if (winner === 'A') {
+        els.scoreA.style.color = 'var(--winner)';
+        els.scoreB.style.color = 'var(--text)';
+      } else if (winner === 'B') {
+        els.scoreB.style.color = 'var(--winner)';
+        els.scoreA.style.color = 'var(--text)';
+      } else {
+        els.scoreA.style.color = 'var(--text)';
+        els.scoreB.style.color = 'var(--text)';
+      }
+
+      document.title = `LifterCalc A/B - ${selectedLabel()}`;
+    }
+
+    function bindSegmented(container, key) {
+      container.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-' + key + ']');
+        if (!button) return;
+        const value = button.dataset[key];
+        state[key] = value;
+        setActive(container, key, value);
+        render();
+      });
+    }
+
+    [els.bwA, els.wlA, els.bwB, els.wlB].forEach(input => input.addEventListener('input', render));
+    bindSegmented(els.coefSelect, 'coef');
+    bindSegmented(els.meetSelect, 'meet');
+    bindSegmented(els.gender, 'gender');
+    render();
+  </script>
+</body>
+</html>
