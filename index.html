@@ -143,6 +143,10 @@
       display:grid;
       gap:7px;
     }
+    .lift-stack{
+      display:grid;
+      gap:6px;
+    }
     .field-grid{
       display:grid;
       grid-template-columns:repeat(2,minmax(0,1fr));
@@ -152,6 +156,7 @@
       display:grid;
       gap:5px;
     }
+    .legacy-lift{display:none;}
     .field label{
       font-size:10px;
       color:var(--muted);
@@ -172,6 +177,32 @@
     .field input:focus{
       border-color:rgba(37,99,235,.55);
       box-shadow:0 0 0 4px rgba(37,99,235,.10);
+    }
+    .lift-mode{
+      display:none;
+      gap:6px;
+    }
+    .lift-mode.active{
+      display:grid;
+    }
+    .lift-total{
+      grid-column:1 / -1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(37,99,235,.08);
+      border:1px solid rgba(37,99,235,.12);
+      font-size:11px;
+      font-weight:800;
+      color:var(--text);
+    }
+    .lift-total span:last-child{
+      color:var(--accent);
+      font-size:14px;
+      font-variant-numeric:tabular-nums;
     }
     .result-grid{
       display:grid;
@@ -225,7 +256,6 @@
       .panel-head,.panel-body{padding-left:8px; padding-right:8px;}
       .panel-head{padding-top:8px; padding-bottom:7px;}
       .panel-body{padding-top:8px; padding-bottom:8px; gap:5px;}
-      .field-grid{grid-template-columns:1fr;}
       .segmented button{padding:7px 4px; font-size:10px;}
       .panel-title{font-size:13px;}
       .metric{padding:8px; min-height:52px;}
@@ -274,9 +304,37 @@
               <label>Body Weight (KG)</label>
               <input type="number" inputmode="decimal" step="0.1" min="0" id="bwA" value="82.5" />
             </div>
-            <div class="field">
+            <div class="field legacy-lift">
               <label>Lifted Weight (KG)</label>
               <input type="number" inputmode="decimal" step="0.1" min="0" id="wlA" value="180" />
+            </div>
+          </div>
+          <div class="lift-stack">
+            <div class="lift-mode" id="benchModeA">
+              <div class="field">
+                <label>Bench Weight (KG)</label>
+                <input type="number" inputmode="decimal" step="0.1" min="0" id="benchA" value="180" />
+              </div>
+            </div>
+            <div class="lift-mode" id="fullModeA">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Squat (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="squatA" value="0" />
+                </div>
+                <div class="field">
+                  <label>Bench (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="benchFullA" value="0" />
+                </div>
+                <div class="field">
+                  <label>Deadlift (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="deadliftA" value="0" />
+                </div>
+                <div class="lift-total">
+                  <span>Total</span>
+                  <span id="totalA">0.00</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="result-grid">
@@ -300,9 +358,37 @@
               <label>Body Weight (KG)</label>
               <input type="number" inputmode="decimal" step="0.1" min="0" id="bwB" value="90" />
             </div>
-            <div class="field">
+            <div class="field legacy-lift">
               <label>Lifted Weight (KG)</label>
               <input type="number" inputmode="decimal" step="0.1" min="0" id="wlB" value="195" />
+            </div>
+          </div>
+          <div class="lift-stack">
+            <div class="lift-mode" id="benchModeB">
+              <div class="field">
+                <label>Bench Weight (KG)</label>
+                <input type="number" inputmode="decimal" step="0.1" min="0" id="benchB" value="195" />
+              </div>
+            </div>
+            <div class="lift-mode" id="fullModeB">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Squat (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="squatB" value="0" />
+                </div>
+                <div class="field">
+                  <label>Bench (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="benchFullB" value="0" />
+                </div>
+                <div class="field">
+                  <label>Deadlift (KG)</label>
+                  <input type="number" inputmode="decimal" step="0.1" min="0" id="deadliftB" value="0" />
+                </div>
+                <div class="lift-total">
+                  <span>Total</span>
+                  <span id="totalB">0.00</span>
+                </div>
+              </div>
             </div>
           </div>
           <div class="result-grid">
@@ -330,6 +416,20 @@
       wlA: document.getElementById('wlA'),
       bwB: document.getElementById('bwB'),
       wlB: document.getElementById('wlB'),
+      benchModeA: document.getElementById('benchModeA'),
+      benchModeB: document.getElementById('benchModeB'),
+      fullModeA: document.getElementById('fullModeA'),
+      fullModeB: document.getElementById('fullModeB'),
+      benchA: document.getElementById('benchA'),
+      benchB: document.getElementById('benchB'),
+      squatA: document.getElementById('squatA'),
+      squatB: document.getElementById('squatB'),
+      benchFullA: document.getElementById('benchFullA'),
+      benchFullB: document.getElementById('benchFullB'),
+      deadliftA: document.getElementById('deadliftA'),
+      deadliftB: document.getElementById('deadliftB'),
+      totalA: document.getElementById('totalA'),
+      totalB: document.getElementById('totalB'),
       scoreA: document.getElementById('scoreA'),
       scoreB: document.getElementById('scoreB'),
       labelA: document.getElementById('labelA'),
@@ -359,8 +459,12 @@
 
     function ipfGL(bodyWeightKg, liftedKg, gender) {
       const coeff = gender === 'female'
-        ? [610.32796, 1045.59282, 0.03048]
-        : [1199.72839, 1025.18162, 0.00921];
+        ? (state.meet === 'bench'
+            ? [142.40398, 442.52671, 0.04724]
+            : [610.32796, 1045.59282, 0.03048])
+        : (state.meet === 'bench'
+            ? [320.98041, 281.40258, 0.01008]
+            : [1199.72839, 1025.18162, 0.00921]);
       if (bodyWeightKg < 35) return 0;
       const power = -coeff[2] * bodyWeightKg;
       return round2(liftedKg * (100 / (coeff[0] - coeff[1] * Math.exp(power))));
@@ -380,18 +484,35 @@
 
     function render() {
       const bwA = parseFloat(els.bwA.value || '0') || 0;
-      const wlA = parseFloat(els.wlA.value || '0') || 0;
       const bwB = parseFloat(els.bwB.value || '0') || 0;
-      const wlB = parseFloat(els.wlB.value || '0') || 0;
 
-      const scoreA = score(bwA, wlA);
-      const scoreB = score(bwB, wlB);
+      const benchA = parseFloat(els.benchA.value || '0') || 0;
+      const benchB = parseFloat(els.benchB.value || '0') || 0;
+      const squatA = parseFloat(els.squatA.value || '0') || 0;
+      const squatB = parseFloat(els.squatB.value || '0') || 0;
+      const benchFullA = parseFloat(els.benchFullA.value || '0') || 0;
+      const benchFullB = parseFloat(els.benchFullB.value || '0') || 0;
+      const deadliftA = parseFloat(els.deadliftA.value || '0') || 0;
+      const deadliftB = parseFloat(els.deadliftB.value || '0') || 0;
+
+      const liftedA = state.meet === 'bench' ? benchA : squatA + benchFullA + deadliftA;
+      const liftedB = state.meet === 'bench' ? benchB : squatB + benchFullB + deadliftB;
+
+      const scoreA = score(bwA, liftedA);
+      const scoreB = score(bwB, liftedB);
       const winner = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : 'TIE';
 
       els.scoreA.textContent = scoreA.toFixed(2);
       els.scoreB.textContent = scoreB.toFixed(2);
       els.labelA.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
       els.labelB.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
+      els.totalA.textContent = liftedA.toFixed(2);
+      els.totalB.textContent = liftedB.toFixed(2);
+
+      els.benchModeA.classList.toggle('active', state.meet === 'bench');
+      els.benchModeB.classList.toggle('active', state.meet === 'bench');
+      els.fullModeA.classList.toggle('active', state.meet === 'full');
+      els.fullModeB.classList.toggle('active', state.meet === 'full');
 
       els.panelA.classList.toggle('winner', winner === 'A');
       els.panelB.classList.toggle('winner', winner === 'B');
@@ -421,7 +542,7 @@
       });
     }
 
-    [els.bwA, els.wlA, els.bwB, els.wlB].forEach(input => input.addEventListener('input', render));
+    [els.bwA, els.bwB, els.benchA, els.benchB, els.squatA, els.squatB, els.benchFullA, els.benchFullB, els.deadliftA, els.deadliftB].forEach(input => input.addEventListener('input', render));
     bindSegmented(els.coefSelect, 'coef');
     bindSegmented(els.meetSelect, 'meet');
     bindSegmented(els.gender, 'gender');
