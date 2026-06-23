@@ -1,552 +1,472 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>LifterCalc A/B Compare</title>
-  <style>
-    :root{
-      --bg1:#f5f7ff;
-      --bg2:#edf6fb;
-      --card:rgba(255,255,255,.76);
-      --card-border:rgba(15,23,42,.08);
-      --text:#0f172a;
-      --muted:#64748b;
-      --shadow:0 18px 50px rgba(15,23,42,.10);
-      --winner:#f59e0b;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(37,99,235,.14), transparent 34%),
-        radial-gradient(circle at top right, rgba(15,118,110,.12), transparent 30%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
-      min-height:100vh;
-    }
-    .app{
-      width:min(1280px, calc(100% - 12px));
-      margin:0 auto;
-      padding:6px 0 10px;
-    }
-    .toolbar{
-      position:sticky;
-      top:6px;
-      z-index:10;
-      padding:9px;
-      margin-bottom:6px;
-      border:1px solid var(--card-border);
-      border-radius:16px;
-      background:rgba(255,255,255,.82);
-      backdrop-filter:blur(14px);
-      box-shadow:var(--shadow);
-    }
-    .toolbar-grid{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:8px;
-    }
-    .group{display:grid; gap:6px;}
-    .group-label{
-      font-size:11px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      font-weight:800;
-    }
-    .segmented{
-      display:grid;
-      grid-auto-flow:column;
-      grid-auto-columns:1fr;
-      gap:6px;
-      background:rgba(148,163,184,.12);
-      padding:5px;
-      border-radius:14px;
-    }
-    .segmented button{
-      appearance:none;
-      border:none;
-      background:transparent;
-      color:var(--muted);
-      padding:8px 6px;
-      border-radius:11px;
-      font-size:11px;
-      font-weight:800;
-      cursor:pointer;
-      transition:.18s ease;
-    }
-    .segmented button.active{
-      background:#fff;
-      color:var(--text);
-      box-shadow:0 8px 20px rgba(15,23,42,.10);
-    }
-    .compare{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:5px;
-      align-items:start;
-    }
-    .panel{
-      border:1px solid var(--card-border);
-      border-radius:18px;
-      background:var(--card);
-      backdrop-filter:blur(12px);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-    }
-    .panel.winner{
-      border-color:rgba(245,158,11,.65);
-      box-shadow:0 0 0 1px rgba(245,158,11,.14), 0 18px 50px rgba(245,158,11,.16);
-      transform:translateY(-1px);
-    }
-    .panel-head{
-      padding:9px 10px 8px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      border-bottom:1px solid rgba(15,23,42,.06);
-      background:linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.30));
-    }
-    .panel.winner .panel-head{
-      background:linear-gradient(180deg, rgba(255,248,225,.96), rgba(255,255,255,.35));
-    }
-    .panel-title{
-      margin:0;
-      font-size:15px;
-      letter-spacing:-.02em;
-    }
-    .panel-sub{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-size:10px;
-      font-weight:800;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-    .winner-chip{
-      display:none;
-      padding:4px 7px;
-      border-radius:999px;
-      color:#92400e;
-      background:rgba(245,158,11,.18);
-      border:1px solid rgba(245,158,11,.18);
-    }
-    .panel.winner .winner-chip{display:inline-flex;}
-    .panel-body{
-      padding:10px;
-      display:grid;
-      gap:7px;
-    }
-    .lift-stack{
-      display:grid;
-      gap:6px;
-    }
-    .field-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:6px;
-    }
-    .field{
-      display:grid;
-      gap:5px;
-    }
-    .legacy-lift{display:none;}
-    .field label{
-      font-size:10px;
-      color:var(--muted);
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    .field input{
-      width:100%;
-      border:1px solid rgba(100,116,139,.20);
-      border-radius:12px;
-      padding:9px 10px;
-      font-size:14px;
-      outline:none;
-      background:#fff;
-      color:var(--text);
-    }
-    .field input:focus{
-      border-color:rgba(37,99,235,.55);
-      box-shadow:0 0 0 4px rgba(37,99,235,.10);
-    }
-    .lift-mode{
-      display:none;
-      gap:6px;
-    }
-    .lift-mode.active{
-      display:grid;
-    }
-    .lift-total{
-      grid-column:1 / -1;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:12px;
-      background:rgba(37,99,235,.08);
-      border:1px solid rgba(37,99,235,.12);
-      font-size:11px;
-      font-weight:800;
-      color:var(--text);
-    }
-    .lift-total span:last-child{
-      color:var(--accent);
-      font-size:14px;
-      font-variant-numeric:tabular-nums;
-    }
-    .result-grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:6px;
-    }
-    .metric{
-      background:rgba(255,255,255,.82);
-      border:1px solid rgba(15,23,42,.07);
-      border-radius:14px;
-      padding:9px;
-      min-height:58px;
-    }
-    .metric .k{
-      font-size:10px;
-      color:var(--muted);
-      font-weight:800;
-      margin-bottom:5px;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-    .metric .v{
-      font-size:19px;
-      font-weight:900;
-      line-height:1.05;
-      letter-spacing:-.03em;
-      font-variant-numeric:tabular-nums;
-    }
-    .metric .s{
-      margin-top:3px;
-      color:var(--muted);
-      font-size:10px;
-      line-height:1.3;
-    }
-    .footnote{
-      margin-top:6px;
-      padding:0 4px;
-      color:var(--muted);
-      font-size:11px;
-      line-height:1.4;
-    }
-    @media (max-width: 980px){
-      .toolbar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-    }
-    @media (max-width: 720px){
-      .app{width:min(100% - 8px, 1280px); padding-top:4px;}
-      .toolbar{top:5px; padding:8px; border-radius:14px;}
-      .toolbar-grid{grid-template-columns:1fr;}
-      .compare{gap:4px;}
-      .panel{border-radius:16px;}
-      .panel-head,.panel-body{padding-left:8px; padding-right:8px;}
-      .panel-head{padding-top:8px; padding-bottom:7px;}
-      .panel-body{padding-top:8px; padding-bottom:8px; gap:5px;}
-      .segmented button{padding:7px 4px; font-size:10px;}
-      .panel-title{font-size:13px;}
-      .metric{padding:8px; min-height:52px;}
-      .metric .v{font-size:17px;}
-      .field input{padding:8px 9px; font-size:13px;}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <!-- 确保移动端完美适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LifterCalc A/B Compare</title>
+    <style>
+        /* 全局重置与基础设置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 尽量保持一屏 */
+        }
+
+        /* 顶部毛玻璃控制栏 */
+        header {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .controls-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        /* 分段选择器样式 */
+        .segmented-control {
+            display: flex;
+            flex: 1;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            padding: 6px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control input[type="radio"]:checked + span {
+            color: #111;
+        }
+
+        /* 通过伪类实现选中背景，避免额外DOM */
+        .segmented-control label:has(input:checked) {
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: #111;
+        }
+
+        /* 主内容区 */
+        main {
+            flex: 1;
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        /* 选手卡片 */
+        .card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        /* 胜者高亮状态 */
+        .card.winner {
+            background: rgba(255, 250, 230, 0.9);
+            border-color: #ffc107;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            transform: scale(1.01);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 4px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .winner-badge {
+            font-size: 10px;
+            font-weight: 800;
+            background: #ffc107;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card.winner .winner-badge {
+            opacity: 1;
+        }
+
+        /* 输入框网格布局 */
+        .input-group {
+            display: grid;
+            grid-template-columns: 35px 1fr;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .input-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-align: left;
+        }
+
+        .input-field {
+            width: 100%;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #888;
+        }
+
+        /* 去除数字输入框箭头 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        .total-display {
+            text-align: right;
+            font-size: 13px;
+            font-weight: bold;
+            color: #555;
+            margin-top: 2px;
+            margin-bottom: 8px;
+            padding-right: 4px;
+            height: 18px; /* 占位防止跳动 */
+        }
+
+        /* 分数显示区域 */
+        .score-container {
+            margin-top: auto;
+            text-align: center;
+            padding: 10px 0 5px 0;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.5px;
+            color: #111;
+        }
+
+        .card.winner .score-value {
+            color: #d84315; /* 暖色强调 */
+        }
+
+        .score-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #888;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* 底部说明 */
+        footer {
+            text-align: center;
+            padding: 6px;
+            font-size: 10px;
+            color: #888;
+        }
+
+        /* 隐藏非全场项目 */
+        .hide-in-bench {
+            display: grid; /* 默认显示为grid */
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <section class="toolbar">
-      <div class="toolbar-grid">
-        <div class="group">
-          <div class="group-label">Coefficient</div>
-          <div class="segmented two" id="coefSelect">
-            <button class="active" data-coef="dots">DOTS</button>
-            <button data-coef="ipfgl">IPF GL</button>
-          </div>
+
+    <header>
+        <div class="controls-grid">
+            <div class="control-row">
+                <div class="segmented-control">
+                    <label><input type="radio" name="coeff" value="DOTS" checked><span>DOTS</span></label>
+                    <label><input type="radio" name="coeff" value="IPFGL"><span>IPF GL</span></label>
+                </div>
+                <div class="segmented-control">
+                    <label><input type="radio" name="gender" value="M" checked><span>MALE</span></label>
+                    <label><input type="radio" name="gender" value="F"><span>FEMALE</span></label>
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="segmented-control">
+                    <label><input type="radio" name="meet" value="FULL" checked><span>FULL MEET</span></label>
+                    <label><input type="radio" name="meet" value="BENCH"><span>BENCH ONLY</span></label>
+                </div>
+            </div>
         </div>
-        <div class="group">
-          <div class="group-label">Meet Type</div>
-          <div class="segmented two" id="meetSelect">
-            <button class="active" data-meet="full">FULL MEET</button>
-            <button data-meet="bench">BENCH ONLY</button>
-          </div>
+    </header>
+
+    <main>
+        <!-- Lifter A -->
+        <div class="card" id="cardA">
+            <div class="card-header">
+                <div class="card-title">Lifter A</div>
+                <div class="winner-badge">WINNER</div>
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">BW</div>
+                <input type="number" id="bwA" class="input-field" inputmode="decimal" value="83.0">
+            </div>
+
+            <div class="input-group hide-in-bench">
+                <div class="input-label">SQ</div>
+                <input type="number" id="sqA" class="input-field" inputmode="decimal" value="200">
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">BP</div>
+                <input type="number" id="bpA" class="input-field" inputmode="decimal" value="140">
+            </div>
+
+            <div class="input-group hide-in-bench">
+                <div class="input-label">DL</div>
+                <input type="number" id="dlA" class="input-field" inputmode="decimal" value="220">
+            </div>
+
+            <div class="total-display" id="totalA-container">Total: <span id="totalA">560</span></div>
+
+            <div class="score-container">
+                <div class="score-value" id="scoreA">0.00</div>
+                <div class="score-label" id="coeffLabelA">DOTS</div>
+            </div>
         </div>
-        <div class="group">
-          <div class="group-label">Gender</div>
-          <div class="segmented two" id="gender">
-            <button class="active" data-gender="male">MALE</button>
-            <button data-gender="female">FEMALE</button>
-          </div>
+
+        <!-- Lifter B -->
+        <div class="card" id="cardB">
+            <div class="card-header">
+                <div class="card-title">Lifter B</div>
+                <div class="winner-badge">WINNER</div>
+            </div>
+            
+            <div class="input-group">
+                <div class="input-label">BW</div>
+                <input type="number" id="bwB" class="input-field" inputmode="decimal" value="93.0">
+            </div>
+
+            <div class="input-group hide-in-bench">
+                <div class="input-label">SQ</div>
+                <input type="number" id="sqB" class="input-field" inputmode="decimal" value="220">
+            </div>
+
+            <div class="input-group">
+                <div class="input-label">BP</div>
+                <input type="number" id="bpB" class="input-field" inputmode="decimal" value="150">
+            </div>
+
+            <div class="input-group hide-in-bench">
+                <div class="input-label">DL</div>
+                <input type="number" id="dlB" class="input-field" inputmode="decimal" value="240">
+            </div>
+
+            <div class="total-display" id="totalB-container">Total: <span id="totalB">610</span></div>
+
+            <div class="score-container">
+                <div class="score-value" id="scoreB">0.00</div>
+                <div class="score-label" id="coeffLabelB">DOTS</div>
+            </div>
         </div>
-      </div>
-    </section>
+    </main>
 
-    <section class="compare">
-      <article class="panel" id="panelA">
-        <div class="panel-head">
-          <h2 class="panel-title">Lifter A</h2>
-          <div class="panel-sub"><span class="winner-chip">WINNER</span><span>Left</span></div>
-        </div>
-        <div class="panel-body">
-          <div class="field-grid">
-            <div class="field">
-              <label>Body Weight (KG)</label>
-              <input type="number" inputmode="decimal" step="0.1" min="0" id="bwA" value="82.5" />
-            </div>
-            <div class="field legacy-lift">
-              <label>Lifted Weight (KG)</label>
-              <input type="number" inputmode="decimal" step="0.1" min="0" id="wlA" value="180" />
-            </div>
-          </div>
-          <div class="lift-stack">
-            <div class="lift-mode" id="benchModeA">
-              <div class="field">
-                <label>Bench Weight (KG)</label>
-                <input type="number" inputmode="decimal" step="0.1" min="0" id="benchA" value="180" />
-              </div>
-            </div>
-            <div class="lift-mode" id="fullModeA">
-              <div class="field-grid">
-                <div class="field">
-                  <label>Squat (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="squatA" value="0" />
-                </div>
-                <div class="field">
-                  <label>Bench (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="benchFullA" value="0" />
-                </div>
-                <div class="field">
-                  <label>Deadlift (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="deadliftA" value="0" />
-                </div>
-                <div class="lift-total">
-                  <span>Total</span>
-                  <span id="totalA">0.00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="result-grid">
-            <div class="metric">
-              <div class="k">Selected Score</div>
-              <div class="v" id="scoreA">0.00</div>
-              <div class="s" id="labelA">DOTS / MALE</div>
-            </div>
-          </div>
-        </div>
-      </article>
+    <footer>
+        高亮表示当前系数下分数更高的一侧
+    </footer>
 
-      <article class="panel" id="panelB">
-        <div class="panel-head">
-          <h2 class="panel-title">Lifter B</h2>
-          <div class="panel-sub"><span class="winner-chip">WINNER</span><span>Right</span></div>
-        </div>
-        <div class="panel-body">
-          <div class="field-grid">
-            <div class="field">
-              <label>Body Weight (KG)</label>
-              <input type="number" inputmode="decimal" step="0.1" min="0" id="bwB" value="90" />
-            </div>
-            <div class="field legacy-lift">
-              <label>Lifted Weight (KG)</label>
-              <input type="number" inputmode="decimal" step="0.1" min="0" id="wlB" value="195" />
-            </div>
-          </div>
-          <div class="lift-stack">
-            <div class="lift-mode" id="benchModeB">
-              <div class="field">
-                <label>Bench Weight (KG)</label>
-                <input type="number" inputmode="decimal" step="0.1" min="0" id="benchB" value="195" />
-              </div>
-            </div>
-            <div class="lift-mode" id="fullModeB">
-              <div class="field-grid">
-                <div class="field">
-                  <label>Squat (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="squatB" value="0" />
-                </div>
-                <div class="field">
-                  <label>Bench (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="benchFullB" value="0" />
-                </div>
-                <div class="field">
-                  <label>Deadlift (KG)</label>
-                  <input type="number" inputmode="decimal" step="0.1" min="0" id="deadliftB" value="0" />
-                </div>
-                <div class="lift-total">
-                  <span>Total</span>
-                  <span id="totalB">0.00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="result-grid">
-            <div class="metric">
-              <div class="k">Selected Score</div>
-              <div class="v" id="scoreB">0.00</div>
-              <div class="s" id="labelB">DOTS / MALE</div>
-            </div>
-          </div>
-        </div>
-      </article>
-    </section>
+    <script>
+        // --- 系数计算公式 ---
 
-    <div class="footnote">自动高亮会标出当前选定系数下分数更高的一侧，平分时两边保持中性。</div>
-  </div>
+        function calculateDOTS(bw, total, gender) {
+            if (bw <= 0 || total <= 0) return 0;
+            const isMale = gender === 'M';
+            const a = isMale ? 0.0000010932801971732 : 0.00000107068614656576;
+            const b = isMale ? 0.0007391293 : 0.0005158568;
+            const c = isMale ? 0.1918759221 : 0.1126655495;
+            const d = isMale ? 24.0900756 : 13.6175032;
+            const e = isMale ? 307.75076 : 57.96288;
+            
+            const denom = -a * Math.pow(bw, 4) + b * Math.pow(bw, 3) - c * Math.pow(bw, 2) + d * bw - e;
+            return total * (500 / denom);
+        }
 
-  <script>
-    const state = { coef: 'dots', meet: 'full', gender: 'male' };
+        function calculateIPFGL(bw, total, gender, meet) {
+            if (bw <= 0 || total <= 0) return 0;
+            const isMale = gender === 'M';
+            const isBench = meet === 'BENCH';
+            let a, b, c;
 
-    const els = {
-      coefSelect: document.getElementById('coefSelect'),
-      meetSelect: document.getElementById('meetSelect'),
-      gender: document.getElementById('gender'),
-      bwA: document.getElementById('bwA'),
-      wlA: document.getElementById('wlA'),
-      bwB: document.getElementById('bwB'),
-      wlB: document.getElementById('wlB'),
-      benchModeA: document.getElementById('benchModeA'),
-      benchModeB: document.getElementById('benchModeB'),
-      fullModeA: document.getElementById('fullModeA'),
-      fullModeB: document.getElementById('fullModeB'),
-      benchA: document.getElementById('benchA'),
-      benchB: document.getElementById('benchB'),
-      squatA: document.getElementById('squatA'),
-      squatB: document.getElementById('squatB'),
-      benchFullA: document.getElementById('benchFullA'),
-      benchFullB: document.getElementById('benchFullB'),
-      deadliftA: document.getElementById('deadliftA'),
-      deadliftB: document.getElementById('deadliftB'),
-      totalA: document.getElementById('totalA'),
-      totalB: document.getElementById('totalB'),
-      scoreA: document.getElementById('scoreA'),
-      scoreB: document.getElementById('scoreB'),
-      labelA: document.getElementById('labelA'),
-      labelB: document.getElementById('labelB'),
-      panelA: document.getElementById('panelA'),
-      panelB: document.getElementById('panelB')
-    };
+            if (isMale) {
+                if (isBench) { a = 320.98041; b = 281.40258; c = 0.01008; } 
+                else         { a = 1199.72839; b = 1025.18162; c = 0.009245; }
+            } else {
+                if (isBench) { a = 142.40398; b = 442.52671; c = 0.04724; } 
+                else         { a = 610.32796; b = 1045.59282; c = 0.03048; }
+            }
 
-    const round2 = (n) => Math.round(n * 100) / 100;
-    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
-    const genderLabel = (gender) => gender === 'female' ? 'FEMALE' : 'MALE';
-    const meetCode = (meet) => meet === 'bench' ? 'BN' : 'PL';
+            return 100 * total / (a - b * Math.exp(-c * bw));
+        }
 
-    function selectedLabel() {
-      return state.coef === 'dots' ? 'DOTS' : 'IPF GL';
-    }
+        // --- DOM 元素引用 ---
+        const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+        
+        const els = {
+            cardA: document.getElementById('cardA'),
+            cardB: document.getElementById('cardB'),
+            totalA: document.getElementById('totalA'),
+            totalB: document.getElementById('totalB'),
+            scoreA: document.getElementById('scoreA'),
+            scoreB: document.getElementById('scoreB'),
+            labelA: document.getElementById('coeffLabelA'),
+            labelB: document.getElementById('coeffLabelB'),
+            totalContA: document.getElementById('totalA-container'),
+            totalContB: document.getElementById('totalB-container'),
+            hideItems: document.querySelectorAll('.hide-in-bench')
+        };
 
-    function dots(bodyWeightKg, liftedKg, gender) {
-      const coeff = gender === 'female'
-        ? [-57.96288, 13.6175032, -0.1126655495, 0.0005158568, -0.0000010706]
-        : [-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093];
-      const bw = clamp(bodyWeightKg, 40, 210);
-      let denom = coeff[0];
-      for (let i = 1; i < coeff.length; i++) denom += coeff[i] * Math.pow(bw, i);
-      return round2((500 / denom) * liftedKg);
-    }
+        // --- 主逻辑 ---
+        function updateApp() {
+            // 获取全局状态
+            const coeff = document.querySelector('input[name="coeff"]:checked').value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const meet = document.querySelector('input[name="meet"]:checked').value;
 
-    function ipfGL(bodyWeightKg, liftedKg, gender) {
-      const coeff = gender === 'female'
-        ? (state.meet === 'bench'
-            ? [142.40398, 442.52671, 0.04724]
-            : [610.32796, 1045.59282, 0.03048])
-        : (state.meet === 'bench'
-            ? [320.98041, 281.40258, 0.01008]
-            : [1199.72839, 1025.18162, 0.00921]);
-      if (bodyWeightKg < 35) return 0;
-      const power = -coeff[2] * bodyWeightKg;
-      return round2(liftedKg * (100 / (coeff[0] - coeff[1] * Math.exp(power))));
-    }
+            // UI调整：切换全场/单项
+            const isBench = meet === 'BENCH';
+            els.hideItems.forEach(el => {
+                el.style.display = isBench ? 'none' : 'grid';
+            });
+            els.totalContA.style.visibility = isBench ? 'hidden' : 'visible';
+            els.totalContB.style.visibility = isBench ? 'hidden' : 'visible';
+            
+            // 更新底部系数标签
+            els.labelA.innerText = coeff;
+            els.labelB.innerText = coeff;
 
-    function score(bodyWeightKg, liftedKg) {
-      return state.coef === 'dots'
-        ? dots(bodyWeightKg, liftedKg, state.gender)
-        : ipfGL(bodyWeightKg, liftedKg, state.gender);
-    }
+            // 获取数据
+            const bwA = getVal('bwA');
+            const bwB = getVal('bwB');
+            
+            let totalA = 0, totalB = 0;
 
-    function setActive(container, key, value) {
-      container.querySelectorAll('button').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset[key] === value);
-      });
-    }
+            if (isBench) {
+                totalA = getVal('bpA');
+                totalB = getVal('bpB');
+            } else {
+                totalA = getVal('sqA') + getVal('bpA') + getVal('dlA');
+                totalB = getVal('sqB') + getVal('bpB') + getVal('dlB');
+            }
 
-    function render() {
-      const bwA = parseFloat(els.bwA.value || '0') || 0;
-      const bwB = parseFloat(els.bwB.value || '0') || 0;
+            // 更新Total显示
+            els.totalA.innerText = totalA;
+            els.totalB.innerText = totalB;
 
-      const benchA = parseFloat(els.benchA.value || '0') || 0;
-      const benchB = parseFloat(els.benchB.value || '0') || 0;
-      const squatA = parseFloat(els.squatA.value || '0') || 0;
-      const squatB = parseFloat(els.squatB.value || '0') || 0;
-      const benchFullA = parseFloat(els.benchFullA.value || '0') || 0;
-      const benchFullB = parseFloat(els.benchFullB.value || '0') || 0;
-      const deadliftA = parseFloat(els.deadliftA.value || '0') || 0;
-      const deadliftB = parseFloat(els.deadliftB.value || '0') || 0;
+            // 计算分数
+            let scoreA = 0, scoreB = 0;
+            if (coeff === 'DOTS') {
+                scoreA = calculateDOTS(bwA, totalA, gender);
+                scoreB = calculateDOTS(bwB, totalB, gender);
+            } else {
+                scoreA = calculateIPFGL(bwA, totalA, gender, meet);
+                scoreB = calculateIPFGL(bwB, totalB, gender, meet);
+            }
 
-      const liftedA = state.meet === 'bench' ? benchA : squatA + benchFullA + deadliftA;
-      const liftedB = state.meet === 'bench' ? benchB : squatB + benchFullB + deadliftB;
+            // 更新分数显示
+            els.scoreA.innerText = scoreA.toFixed(2);
+            els.scoreB.innerText = scoreB.toFixed(2);
 
-      const scoreA = score(bwA, liftedA);
-      const scoreB = score(bwB, liftedB);
-      const winner = scoreA > scoreB ? 'A' : scoreB > scoreA ? 'B' : 'TIE';
+            // 高亮胜者
+            els.cardA.classList.remove('winner');
+            els.cardB.classList.remove('winner');
+            
+            if (scoreA > scoreB && scoreA > 0) {
+                els.cardA.classList.add('winner');
+            } else if (scoreB > scoreA && scoreB > 0) {
+                els.cardB.classList.add('winner');
+            }
+        }
 
-      els.scoreA.textContent = scoreA.toFixed(2);
-      els.scoreB.textContent = scoreB.toFixed(2);
-      els.labelA.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
-      els.labelB.textContent = `${selectedLabel()} / ${genderLabel(state.gender)}`;
-      els.totalA.textContent = liftedA.toFixed(2);
-      els.totalB.textContent = liftedB.toFixed(2);
+        // --- 事件绑定 ---
+        // 绑定输入框事件
+        document.querySelectorAll('.input-field').forEach(input => {
+            input.addEventListener('input', updateApp);
+            // 获得焦点时全选，方便手机端修改
+            input.addEventListener('focus', function() { this.select(); });
+        });
 
-      els.benchModeA.classList.toggle('active', state.meet === 'bench');
-      els.benchModeB.classList.toggle('active', state.meet === 'bench');
-      els.fullModeA.classList.toggle('active', state.meet === 'full');
-      els.fullModeB.classList.toggle('active', state.meet === 'full');
+        // 绑定单选框事件
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', updateApp);
+        });
 
-      els.panelA.classList.toggle('winner', winner === 'A');
-      els.panelB.classList.toggle('winner', winner === 'B');
+        // 初始化执行一次
+        updateApp();
 
-      if (winner === 'A') {
-        els.scoreA.style.color = 'var(--winner)';
-        els.scoreB.style.color = 'var(--text)';
-      } else if (winner === 'B') {
-        els.scoreB.style.color = 'var(--winner)';
-        els.scoreA.style.color = 'var(--text)';
-      } else {
-        els.scoreA.style.color = 'var(--text)';
-        els.scoreB.style.color = 'var(--text)';
-      }
-
-      document.title = `LifterCalc A/B - ${selectedLabel()}`;
-    }
-
-    function bindSegmented(container, key) {
-      container.addEventListener('click', (event) => {
-        const button = event.target.closest('button[data-' + key + ']');
-        if (!button) return;
-        const value = button.dataset[key];
-        state[key] = value;
-        setActive(container, key, value);
-        render();
-      });
-    }
-
-    [els.bwA, els.bwB, els.benchA, els.benchB, els.squatA, els.squatB, els.benchFullA, els.benchFullB, els.deadliftA, els.deadliftB].forEach(input => input.addEventListener('input', render));
-    bindSegmented(els.coefSelect, 'coef');
-    bindSegmented(els.meetSelect, 'meet');
-    bindSegmented(els.gender, 'gender');
-    render();
-  </script>
+    </script>
 </body>
 </html>
