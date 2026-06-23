@@ -2,11 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 确保移动端完美适配 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LifterCalc A/B Compare</title>
     <style>
-        /* 全局重置与基础设置 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -14,24 +12,31 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html,
+        body {
+            min-height: 100%;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
             color: #333;
-            height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 尽量保持一屏 */
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
         }
 
-        /* 顶部毛玻璃控制栏 */
         header {
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            padding: 8px;
+            padding: 10px 8px 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             z-index: 10;
+            flex: 0 0 auto;
         }
 
         .controls-grid {
@@ -48,7 +53,6 @@
             gap: 8px;
         }
 
-        /* 分段选择器样式 */
         .segmented-control {
             display: flex;
             flex: 1;
@@ -77,18 +81,16 @@
             color: #111;
         }
 
-        /* 通过伪类实现选中背景，避免额外DOM */
         .segmented-control label:has(input:checked) {
             background: #fff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             color: #111;
         }
 
-        /* 主内容区 */
         main {
-            flex: 1;
+            flex: 1 1 auto;
             display: flex;
-            padding: 8px;
+            padding: 10px 8px calc(24px + env(safe-area-inset-bottom));
             gap: 8px;
             max-width: 600px;
             margin: 0 auto;
@@ -96,7 +98,6 @@
             align-items: stretch;
         }
 
-        /* 选手卡片 */
         .card {
             flex: 1;
             background: rgba(255, 255, 255, 0.7);
@@ -107,9 +108,9 @@
             transition: all 0.3s ease;
             border: 2px solid transparent;
             position: relative;
+            justify-content: flex-start;
         }
 
-        /* 胜者高亮状态 */
         .card.winner {
             background: rgba(255, 250, 230, 0.9);
             border-color: #ffc107;
@@ -147,7 +148,6 @@
             opacity: 1;
         }
 
-        /* 输入框网格布局 */
         .input-group {
             display: grid;
             grid-template-columns: 35px 1fr;
@@ -181,11 +181,10 @@
             border-color: #888;
         }
 
-        /* 去除数字输入框箭头 */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .total-display {
@@ -194,20 +193,19 @@
             font-weight: bold;
             color: #555;
             margin-top: 2px;
-            margin-bottom: 8px;
+            margin-bottom: 0;
             padding-right: 4px;
-            height: 18px; /* 占位防止跳动 */
+            height: 18px;
         }
 
-        /* 分数显示区域 */
         .score-container {
-            margin-top: auto;
+            margin-top: 16px;
             text-align: center;
-            padding: 10px 0 5px 0;
+            padding: 8px 0 4px 0;
         }
 
         .score-value {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 900;
             line-height: 1;
             letter-spacing: -0.5px;
@@ -215,7 +213,7 @@
         }
 
         .card.winner .score-value {
-            color: #d84315; /* 暖色强调 */
+            color: #d84315;
         }
 
         .score-label {
@@ -226,17 +224,41 @@
             text-transform: uppercase;
         }
 
-        /* 底部说明 */
         footer {
             text-align: center;
-            padding: 6px;
+            padding: 4px 6px calc(10px + env(safe-area-inset-bottom));
             font-size: 10px;
             color: #888;
+            flex: 0 0 auto;
         }
 
-        /* 隐藏非全场项目 */
         .hide-in-bench {
-            display: grid; /* 默认显示为grid */
+            display: grid;
+        }
+
+        @media (max-height: 760px) {
+            header {
+                padding-top: 8px;
+                padding-bottom: 6px;
+            }
+
+            main {
+                padding-top: 8px;
+                padding-bottom: calc(18px + env(safe-area-inset-bottom));
+            }
+
+            .card {
+                padding: 9px;
+            }
+
+            .score-container {
+                margin-top: 12px;
+                padding-top: 6px;
+            }
+
+            .score-value {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
@@ -264,13 +286,12 @@
     </header>
 
     <main>
-        <!-- Lifter A -->
         <div class="card" id="cardA">
             <div class="card-header">
                 <div class="card-title">Lifter A</div>
                 <div class="winner-badge">WINNER</div>
             </div>
-            
+
             <div class="input-group">
                 <div class="input-label">BW</div>
                 <input type="number" id="bwA" class="input-field" inputmode="decimal" value="83.0">
@@ -299,13 +320,12 @@
             </div>
         </div>
 
-        <!-- Lifter B -->
         <div class="card" id="cardB">
             <div class="card-header">
                 <div class="card-title">Lifter B</div>
                 <div class="winner-badge">WINNER</div>
             </div>
-            
+
             <div class="input-group">
                 <div class="input-label">BW</div>
                 <input type="number" id="bwB" class="input-field" inputmode="decimal" value="93.0">
@@ -335,13 +355,7 @@
         </div>
     </main>
 
-    <footer>
-        高亮表示当前系数下分数更高的一侧
-    </footer>
-
     <script>
-        // --- 系数计算公式 ---
-
         function calculateDOTS(bw, total, gender) {
             if (bw <= 0 || total <= 0) return 0;
             const isMale = gender === 'M';
@@ -350,7 +364,7 @@
             const c = isMale ? 0.1918759221 : 0.1126655495;
             const d = isMale ? 24.0900756 : 13.6175032;
             const e = isMale ? 307.75076 : 57.96288;
-            
+
             const denom = -a * Math.pow(bw, 4) + b * Math.pow(bw, 3) - c * Math.pow(bw, 2) + d * bw - e;
             return total * (500 / denom);
         }
@@ -362,19 +376,18 @@
             let a, b, c;
 
             if (isMale) {
-                if (isBench) { a = 320.98041; b = 281.40258; c = 0.01008; } 
-                else         { a = 1199.72839; b = 1025.18162; c = 0.009245; }
+                if (isBench) { a = 320.98041; b = 281.40258; c = 0.01008; }
+                else { a = 1199.72839; b = 1025.18162; c = 0.009245; }
             } else {
-                if (isBench) { a = 142.40398; b = 442.52671; c = 0.04724; } 
-                else         { a = 610.32796; b = 1045.59282; c = 0.03048; }
+                if (isBench) { a = 142.40398; b = 442.52671; c = 0.04724; }
+                else { a = 610.32796; b = 1045.59282; c = 0.03048; }
             }
 
             return 100 * total / (a - b * Math.exp(-c * bw));
         }
 
-        // --- DOM 元素引用 ---
         const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
-        
+
         const els = {
             cardA: document.getElementById('cardA'),
             cardB: document.getElementById('cardB'),
@@ -389,29 +402,24 @@
             hideItems: document.querySelectorAll('.hide-in-bench')
         };
 
-        // --- 主逻辑 ---
         function updateApp() {
-            // 获取全局状态
             const coeff = document.querySelector('input[name="coeff"]:checked').value;
             const gender = document.querySelector('input[name="gender"]:checked').value;
             const meet = document.querySelector('input[name="meet"]:checked').value;
 
-            // UI调整：切换全场/单项
             const isBench = meet === 'BENCH';
             els.hideItems.forEach(el => {
                 el.style.display = isBench ? 'none' : 'grid';
             });
             els.totalContA.style.visibility = isBench ? 'hidden' : 'visible';
             els.totalContB.style.visibility = isBench ? 'hidden' : 'visible';
-            
-            // 更新底部系数标签
+
             els.labelA.innerText = coeff;
             els.labelB.innerText = coeff;
 
-            // 获取数据
             const bwA = getVal('bwA');
             const bwB = getVal('bwB');
-            
+
             let totalA = 0, totalB = 0;
 
             if (isBench) {
@@ -422,11 +430,9 @@
                 totalB = getVal('sqB') + getVal('bpB') + getVal('dlB');
             }
 
-            // 更新Total显示
             els.totalA.innerText = totalA;
             els.totalB.innerText = totalB;
 
-            // 计算分数
             let scoreA = 0, scoreB = 0;
             if (coeff === 'DOTS') {
                 scoreA = calculateDOTS(bwA, totalA, gender);
@@ -436,14 +442,12 @@
                 scoreB = calculateIPFGL(bwB, totalB, gender, meet);
             }
 
-            // 更新分数显示
             els.scoreA.innerText = scoreA.toFixed(2);
             els.scoreB.innerText = scoreB.toFixed(2);
 
-            // 高亮胜者
             els.cardA.classList.remove('winner');
             els.cardB.classList.remove('winner');
-            
+
             if (scoreA > scoreB && scoreA > 0) {
                 els.cardA.classList.add('winner');
             } else if (scoreB > scoreA && scoreB > 0) {
@@ -451,22 +455,16 @@
             }
         }
 
-        // --- 事件绑定 ---
-        // 绑定输入框事件
         document.querySelectorAll('.input-field').forEach(input => {
             input.addEventListener('input', updateApp);
-            // 获得焦点时全选，方便手机端修改
             input.addEventListener('focus', function() { this.select(); });
         });
 
-        // 绑定单选框事件
         document.querySelectorAll('input[type="radio"]').forEach(radio => {
             radio.addEventListener('change', updateApp);
         });
 
-        // 初始化执行一次
         updateApp();
-
     </script>
 </body>
 </html>
